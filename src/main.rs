@@ -1,4 +1,5 @@
 use std::thread;
+use std::time::Instant;
 use std::io::{self, BufRead};
 use std::fs::{File, OpenOptions};
 use std::vec::Vec;
@@ -111,10 +112,10 @@ fn calc_hash(input: &[u8]) -> u64 {
     let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
     for b in input {
         hash ^= *b as u64;
-        hash = 0x100_0000_01b3u64.wrapping_mul(hash);
+        hash = 0x100_0000_01b3_u64.wrapping_mul(hash);
     }
 
-    hash ^ 0x5bac_903b_a7d8_1967u64
+    hash ^ 0x5bac_903b_a7d8_1967_u64
 }
 
 fn await_and_write(handle: Arc<Mutex<File>>, strname: &str, hash: u64) {
@@ -136,18 +137,29 @@ fn main() -> io::Result<()> {
 
     let file_mutex = Arc::new(Mutex::new(file));
 
-    let mut tid = 0;
+    let report_every_n: usize = 10_000_000;
 
-    let threads: Vec<_> = thread_ids.into_iter().map(|_| {
+    let threads: Vec<_> = thread_ids.into_iter().map(|tid| {
         let mut thread_wq = work_queue.clone();
         let file_handle = file_mutex.clone();
         let mut n: usize = 0;
-        tid += 1;
+        let mut t0 = Instant::now();
+        let mut total_reports: usize = 0;
 
         thread::spawn(move || {
             loop {
-                if n % 10_000_000 == 0 {
-                    println!("TID [{}]: {}", tid, n);
+                if n % report_every_n == 0 {
+                    // let t1 = Instant::now();
+                    println!(
+                        "TID [{}]: {:.2} execs/s totaling {}",
+                        tid,
+                        n as f64 / t0.elapsed().as_secs_f64(),
+                        total_reports * n);
+                        // t1.saturating_duration_since(t0));
+
+                    t0 = Instant::now();
+                    total_reports += 1;
+                    n = 0;
                 }
 
                 if let Some(procname) = thread_wq.pull_work() {
@@ -156,7 +168,6 @@ fn main() -> io::Result<()> {
                     if HASHES.contains(&hash) {
                         let file_handle = file_handle.clone();
                         let strname = std::str::from_utf8(&procname).unwrap();
-
                         println!("[!] {}:{}",
                             strname,
                             hash);

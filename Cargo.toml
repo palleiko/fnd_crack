@@ -1,5 +1,5 @@
 [package]
-name = "fnd_crack"
+name = "fnv_crack"
 version = "0.1.0"
 authors = ["Ian Palleiko <ian.palleiko@gmail.com>"]
 edition = "2018"

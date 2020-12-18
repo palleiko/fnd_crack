@@ -128,7 +128,7 @@ fn main() -> io::Result<()> {
 
     let thread_ids: Vec<_> = (0..N_THREADS).collect();
 
-    let mut file = OpenOptions::new()
+    let file = OpenOptions::new()
         .append(true)
         .create(true)
         .open("found.txt")

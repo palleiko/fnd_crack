@@ -7,7 +7,7 @@ use workctl::WorkQueue;
 use std::io::prelude::*;
 use std::sync::{Mutex, Arc};
 
-const N_THREADS: usize = 8;
+const N_THREADS: usize = 12;
 
 const HASHES: [u64; 82] = [
     10374841591685794123,

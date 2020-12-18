@@ -136,12 +136,20 @@ fn main() -> io::Result<()> {
 
     let file_mutex = Arc::new(Mutex::new(file));
 
+    let mut tid = 0;
+
     let threads: Vec<_> = thread_ids.into_iter().map(|_| {
         let mut thread_wq = work_queue.clone();
         let file_handle = file_mutex.clone();
+        let mut n: usize = 0;
+        tid += 1;
 
         thread::spawn(move || {
             loop {
+                if n % 10_000_000 == 0 {
+                    println!("TID [{}]: {}", tid, n);
+                }
+
                 if let Some(procname) = thread_wq.pull_work() {
                     let procname = procname.into_bytes();
                     let hash = calc_hash(&procname);
@@ -158,6 +166,7 @@ fn main() -> io::Result<()> {
                 } else {
                     thread::yield_now();
                 }
+                n += 1;
             }
         })
     }).collect();

@@ -8,6 +8,7 @@ use std::io::prelude::*;
 use std::sync::{Mutex, Arc};
 
 const N_THREADS: usize = 12;
+const MAX_ITER_WITHOUT_WORK: usize = 1000;
 
 const HASHES: [u64; 82] = [
     10374841591685794123,
@@ -145,6 +146,7 @@ fn main() -> io::Result<()> {
         let mut n: usize = 0;
         let mut t0 = Instant::now();
         let mut total_reports: usize = 0;
+        let mut times_yielded = 0;
 
         thread::spawn(move || {
             loop {
@@ -174,7 +176,12 @@ fn main() -> io::Result<()> {
 
                         await_and_write(file_handle, strname, hash);
                     }
+                    times_yielded = 0;
                 } else {
+                    times_yielded += 1;
+                    if times_yielded > MAX_ITER_WITHOUT_WORK {
+                        break;
+                    }
                     thread::yield_now();
                 }
                 n += 1;
